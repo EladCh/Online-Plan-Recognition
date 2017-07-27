@@ -1,6 +1,8 @@
 from collections import OrderedDict
 
 
+# Action representation for the Domain_Info class
+# Main values are index, validity, a list of preconditions, and a list of effects
 class Action:
 
     def __init__(self, data, predicat_dict, index):
@@ -36,6 +38,7 @@ class Action:
             self.times_visited = 0
 
 
+# Predicates representation for the Domain_Info class
 class Predicates:
 
     def __init__(self, data, index):

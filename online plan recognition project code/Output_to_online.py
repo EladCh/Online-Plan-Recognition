@@ -2,6 +2,7 @@ import os
 import time
 ROOT_DIR = os.getcwd()
 
+
 # unpack relevant files from results tar files
 def unpack():
     # create temp results directory
@@ -25,6 +26,8 @@ def unpack():
             os.system("rm " + entry)
             os.chdir("../../")
 
+
+# create report file for an online run
 def create_report():
     path = os.getcwd()
     if not "/temp_results" in path:
@@ -33,11 +36,9 @@ def create_report():
     # insert all result tars into a sorted list
     entries = os.listdir(path)
     entries.sort()
-
     os.chdir("../")
-    # set report file name (planner and current time)
-    t = os.getcwd()
 
+    # set report file name (planner and current time)
     name_instream = open(ROOT_DIR + "/results/used_planner.txt", "r")
     file_name = name_instream.readline() + '_' + time.strftime("%c").replace(" ","_") + ".csv"
     name_instream.close()
@@ -51,13 +52,13 @@ def create_report():
             if "Ideal_Cost" in line:
                 offline_ideal_costs.append(line.split("=")[1].replace("\n",""))
 
-
-
-    # create final-report file based on the gathered data
-    first = True
+    # create atoms.csv file for each csv file
     atoms_file_name = file_name.replace(".csv", "_atoms.csv")
     atom_path = ROOT_DIR + "/results/" + atoms_file_name
     atoms = open(atom_path, "w")
+
+    # create final-report file based on the gathered data
+    first = True
     with open(ROOT_DIR + "/results/" + file_name, "w") as outstream:
         for entry in entries:
             counter_flag = True
@@ -66,6 +67,7 @@ def create_report():
             read_lines_before = False
             file = path + "/" + entry
             os.chdir(file)
+            # read data from report.txt file
             with open(file+"/report.txt", "r") as instream:
                 if first:
                     for i in range(3):
@@ -80,6 +82,7 @@ def create_report():
                         outstream.write(name + "," + value)
                         atoms.write(name + "," + value)
                     outstream.write("obs_num,hyp_num,")
+                    # add titles
                     for i in range(int(num_hyp)):
                         outstream.write("hyp_index,hyp_test_failed,hyp_is_true,timeout,"
                                         "heap_restriction,obs_cost,current_cost,ideal_cost,hyp_GR_rank,hyp_VK_rank,"
@@ -95,10 +98,8 @@ def create_report():
                 outstream.write(num_hyp.replace("\n", ","))
 
                 hyp_counter = 1
+                # add the relevant lines from report.txt
                 for line in instream:
-                    # if counter_flag:
-                    #     outstream.write(str(hyp_counter) + ",")
-                    #     counter_flag = False
                     if "Hyp_VK_rank" in line:
                         ranks.append(line.split("=")[1].replace("\n", ""))
                         outstream.write(line.split("=")[1].replace("\n", ","))
@@ -116,6 +117,7 @@ def create_report():
                         outstream.write(line.split("=")[1].replace("\n", ","))
                     else:
                         outstream.write(line.split("=")[1].replace("\n", ","))
+                # add the rank values
                 for rank in ranks:
                     outstream.write(rank + ",")
             outstream.seek(-1, os.SEEK_END)

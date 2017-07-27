@@ -48,6 +48,7 @@ class Domain_info:
         elif "easy" in domain_name or "bui" in domain_name or "logistics" in domain_name:
             self.easy()
 
+    # parsing function for intrusion and block domains
     def intrusion(self):
         actions = []
         predicates = []
@@ -94,6 +95,7 @@ class Domain_info:
                     self.actions_dict.get(ob.name).append(ob)
                 i += 1
 
+    # parsing function for easy, bui and logistics domains
     def easy(self):
         actions = []
         predicates = []
@@ -143,6 +145,7 @@ class Domain_info:
                     self.actions_dict.get(ob.name).append(ob)
                 i += 1
 
+    # gets the preconditions of the init state
     def get_init_preconds(self):
         # mark the init preconditions as valid
         with open(os.getcwd() + "/pr-problem.pddl") as instream:
@@ -159,6 +162,7 @@ class Domain_info:
                         precondition_object.times_visited += 1
                         line += 1
 
+    # save the crucial data of that iteration on hyps in the saved_data member
     def save_data(self, j, i):
         # saves the data of the iteration
         spec_data = [self.cost, self.fulfilled_actions, self.in_process_preconditions, self.actions_in_cost]
@@ -178,6 +182,7 @@ class Domain_info:
 
         pass
 
+    # save the crucial data of that iteration on obs in the saved_data member
     def save_obs_data(self, j):
         # saves the data of the iteration
         spec_data = [self.obs_cost, self.obs_fulfilled_actions, self.obs_in_process_preconditions, self.obs_in_cost]
@@ -203,12 +208,14 @@ class Domain_info:
         for predicate in self.predicates:
             predicate.valid = False
 
+    # clean former information from object's members
     def restart_obs(self):
         # restart the obs members in the domain object
         self.obs_seen_actions = []
         self.obs_fulfilled_actions = []
         self.obs_fulfilled_predicates = []
 
+    # gets the predicates of the action observed and finds the plan to obs
     def get_obs_predicates(self, obs_num):
         # mark the observed action and its preconditions as true
         obs_action_list = []
@@ -234,6 +241,7 @@ class Domain_info:
             self.iterate_lists_obs()
         return
 
+    # gets an hyp and finds the plan to that hyp according to the pddl
     def run_hyp(self, hype, obs=[]):
         # run over the atoms of the hyp
         atom_list = []
@@ -262,6 +270,7 @@ class Domain_info:
         # set the cost of the hyp as the number of the fulfilled actions
         self.cost = self.fulfilled_actions.__len__()
 
+    # check if the action happened
     def check_actions(self, possible_actions):
         # check if the action occurred
         precons = possible_actions.precondition
@@ -284,6 +293,7 @@ class Domain_info:
                 else:
                     return True
 
+    # run recursively on the domain according to the preconditions that are effect of a possible action
     def create_lists(self, input):
         # run recursively over the domain according to the domain pddl file
         self.in_process_preconditions.append(input)
@@ -329,6 +339,7 @@ class Domain_info:
         from collections import OrderedDict
         self.in_process_preconditions = list(OrderedDict.fromkeys(self.in_process_preconditions))
 
+    # run over the list of the possible actions and check which action really happened
     def iterate_lists(self):
         # run over the possible actions list and finds out which action really happened
         temp_actions_list = self.in_process_actions
@@ -345,6 +356,7 @@ class Domain_info:
 
         seen_preconditions = self.in_process_preconditions
 
+        # debag tool- printing the seen action
         for o in seen_actions:
             print "hyp-" + str(o.name) + ":" + str(o.index)
 
@@ -378,6 +390,7 @@ class Domain_info:
                         effect_obj.valid = True
         print "________________________________________________________"
 
+    # run recursively on the domain according to the preconditions that are effect of a possible action
     def create_lists_obs(self, input):
         self.obs_in_process_preconditions.append(input)
         precondition_obj_list = []
@@ -417,6 +430,7 @@ class Domain_info:
         from collections import OrderedDict
         self.obs_in_process_preconditions = list(OrderedDict.fromkeys(self.obs_in_process_preconditions))
 
+    # run over the list of the possible actions and check which action really happened
     def iterate_lists_obs(self):
         # temp_actions_list = self.obs_in_process_actions
         # seen_actions = list(reversed(temp_actions_list))
@@ -476,6 +490,7 @@ class Domain_info:
                         effect_obj.valid = True
         self.obs_fulfilled_actions = list(OrderedDict.fromkeys(self.obs_fulfilled_actions))
 
+    # reset the dictionaries to the default state
     def reset_dictionaries(self):
         # restart the dictionaries
         for actions in self.actions_dict:
@@ -484,6 +499,7 @@ class Domain_info:
         for predicate in self.predicates_dict:
             self.predicates_dict.get(predicate).valid = False
 
+    # generates new pddls for the observation run
     def generate_pddl_for_obs_plan(self, obs):
         obs_preconditions=[]
         # get obs preconditions
@@ -497,7 +513,6 @@ class Domain_info:
                 p_str="("+p_str.replace("_"," ").lower().strip()+")"
                 if not "explained" in p_str:
                     temp_list.append(p_str)
-                # temp_list.append(p_str)
 
             obs_preconditions.append(temp_list)
 
@@ -522,6 +537,7 @@ class Domain_info:
             outstream.close()
             instream.close()
 
+    # iterate over a directory and sub directories
     def walk(self, dir):
         entries = os.listdir(dir)
         for entry in entries:
@@ -531,6 +547,7 @@ class Domain_info:
             instance_path = os.path.join(dir, instance_path)
             yield entry, domain_path, instance_path
 
+    # use the planner on the observations
     def run_planner_on_obs(self, obs_index):
         # os.chdir(ROOT_DIR)
         obs_plans=[]

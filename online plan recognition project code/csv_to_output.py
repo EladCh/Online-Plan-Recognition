@@ -2,8 +2,6 @@ import csv
 import numpy
 import os
 
-import time
-
 
 # compress csv file to one line
 def csv_to_output_line(file_name, current_max_hyp=0):
@@ -97,16 +95,10 @@ def csv_to_output_line(file_name, current_max_hyp=0):
             timeout = int(result[i][j])
             data += str(timeout) + ","
 
-        # elif j == cols-9:
-        #     data += result[title_line+1][j] + ","
-        #
-        # elif j == cols-8:
-        #     data += result[title_line+1][j] + ","
-
-
-    #making rank matrix
+    # creating the rank matrix
+    # initialize
     ranking_matrix = [[2 for i in range(x.__len__()-cols)] for j in range(rows-4)]
-
+    # set values based on the input file
     for i in range(4, rows):
         for j in range(cols,x.__len__()):
             ranking_matrix[i-4][j-cols] = result[i][j]
@@ -115,13 +107,16 @@ def csv_to_output_line(file_name, current_max_hyp=0):
     conv_array = []
     cou = 0
     num_of_obs = ranking_matrix.__len__()
+    # reverse iterating the column
     for j in range(x.__len__() - cols):
         cou = 0
         con_value = float(1)
         con_index = 0
+        # if the column didn't converge, insert 0 to the convergence array
         if float(ranking_matrix[num_of_obs-1][j]) < con_value:
             conv_array.append(0)
             continue
+        # starting with the last cell, find how many cells are equal to 1
         else:
             inserted_flag = False
             for i in range(num_of_obs-1, -1, -1):
@@ -140,6 +135,7 @@ def csv_to_output_line(file_name, current_max_hyp=0):
 
     # ranked first, only for real hyp
     r_first_counter = 0
+    # find the amount of times the real hyp had the highest rank
     for i in range(rows-4):
         m = max(ranking_matrix[i])
         real_hyp_rank = ranking_matrix[i][true_hyp_col-1]
@@ -148,7 +144,7 @@ def csv_to_output_line(file_name, current_max_hyp=0):
     first = float(r_first_counter)
     data += str(round(first/num_of_obs, 5))
 
-
+    # write the collected data to statistical_data.csv
     with open("statistical_data.csv", "a") as outstream:
         outstream.write(data+"\n")
 
@@ -156,6 +152,7 @@ def csv_to_output_line(file_name, current_max_hyp=0):
         os.makedirs("processed_results", mode=0777)
     path = os.getcwd() + "/processed_results"
 
+    # move the file to processed_results folder
     command = "mv " + file_name + " " + path
     os.system(command)
 
@@ -163,7 +160,6 @@ def csv_to_output_line(file_name, current_max_hyp=0):
         return hyps_num_int
     return current_max_hyp
 
-# TODO finish convergence and ranked first
 
 def run(file_name):
     titles = "hyp_test_failed,hyp_is_true,hype_plan_time_O,hyp_plan_time_not_O,hyp_trans_time,hyp_plan_time,hyp_test_time,"
@@ -181,7 +177,7 @@ def run(file_name):
         title += titles
     title += "convergence,ranked_first\n"
 
-
+    # create the final statistical_result.csv file based on the previously created statistical_data file
     with open("statistical_data.csv", "r") as instream:
         with open("statistical_result.csv", "w") as outstream:
             outstream.write(title)

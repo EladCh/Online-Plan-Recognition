@@ -7,10 +7,10 @@ import planners, translation
 import linecache
 import problems_info
 
-
 count = -1
 
 
+# set a unique name to each .soln file and move them to solution_files folder
 def save_sol_file(id, index, type, obs_index = -1):
 	entries = os.listdir(os.getcwd())
 
@@ -24,11 +24,6 @@ def save_sol_file(id, index, type, obs_index = -1):
 	folder_name = from_path + "/results/solution_files"
 	if not os.path.exists(folder_name):
 		os.makedirs(folder_name, mode=0777)
-
-	# entries = os.listdir(to_path)
-	# if name in entries:
-	# 	name = "1_" + name
-
 
 	command = "cp " + from_path + "pr-problem.soln " + to_path + name
 	os.system(command)
@@ -115,7 +110,7 @@ class Probabilistic :
 		G_Obs_time = 0.0
 		min_cost = 1e7
 
-		# EXPLAIN: creates a propriate planner according to the flags in option.py file
+		# EXPLAIN: creates appropriate planner according to the flags in option.py file
 		for id, domain, instance in self.walk( 'prob-%s-PR'%index ) :	
 			if options.optimal :	
 				plan_for_G_Obs_cmd = planners.H2( domain, instance, index, options.max_time, options.max_memory )
@@ -129,7 +124,7 @@ class Probabilistic :
 					self.greedy = True
 			# EXPLAIN: run the planner
 			plan_for_G_Obs_cmd.execute()
-			# EXPLAIN: return if failes
+			# EXPLAIN: return if fails
 			if plan_for_G_Obs_cmd.signal != 0 and plan_for_G_Obs_cmd.signal != 256:
 				self.test_failed = True
 				return
@@ -294,19 +289,11 @@ class Probabilistic :
 		trans_cmd = translation.Probabilistic_PR( 'domain.pddl', hyp_problem, 'obs.dat' )
 		trans_cmd.execute()
 
-		# if "H" in self.name:
-		# 	path = os.getcwd() + "/" + 'pr-problem.soln'
-		# 	self.offline_ideal_cost = self.get_greedy_cost(path, self.name)
-
-
-
-		# plan_decifer = decipher.run()
 		self.trans_time = trans_cmd.time
 		os.system( 'mv prob-PR prob-%s-PR'%index )
 		self.costs = dict()
 		G_Obs_time = 0.0
 		min_cost = 1e7
-		# soln_flag=False
 		time_bound = max_time
 		# EXPLAIN: if optimal flag in options.py was risen
 		if optimal :
@@ -322,7 +309,6 @@ class Probabilistic :
 				# EXPLAIN: calculate complimentory plans (without obs)
 				if id == 'neg-O' :
 					self.Plan_Time_Not_O = plan_for_G_Obs_cmd.time
-					soln_flag=True
 				# EXPLAIN: update time
 				G_Obs_time += plan_for_G_Obs_cmd.time
 				self.costs[id] = plan_for_G_Obs_cmd.cost
@@ -332,9 +318,7 @@ class Probabilistic :
 				# Save solution files
 				if id == 'O' or id == 'neg-O':
 					save_sol_file(id, index, "offline")
-		# if soln_flag:
-		# 	self.load_plan("pr-problem.soln")
-		# 	soln_flag=False
+
 		# EXPLAIN: if optimal flag in options.py was not risen
 		if not optimal :
 			# time_bound = max_time / 3
@@ -374,8 +358,6 @@ class Probabilistic :
 
 		self.plan_time = G_Obs_time
 		self.total_time = trans_cmd.time + self.plan_time
-
-
 
 		# EXPLAIN: definition 4 and 5, (Ramirez & Geffner 2010)
 		# P(O|G) / P( \neg O | G) = exp { -beta Delta(G,O) }
@@ -456,6 +438,7 @@ class Probabilistic :
 		# erase folder after done unpacking
 		os.system("rm " + "prob-PR")
 
+	# get the ideal plan cost based on the used planner
 	def get_greedy_cost(self, path, planner_name):
 		cost = -1
 		if "LAMA" in planner_name:
@@ -475,6 +458,7 @@ class Probabilistic :
 						break
 			return int(cost)
 
+	# modifying pr_problem file according to the observation we have seen
 	def modify_init_pr_problem_file(self, domain, path_to_problem_file):
 		# open the problem file for modifications
 		with open (path_to_problem_file) as prDomainFile:
@@ -557,13 +541,7 @@ class Probabilistic :
 				for i in range (i,lines.__len__()):
 					new_file += lines[i]
 				break
-			# print "\n\n"+new_file
 
 		# write the new file
 		with open(path_to_problem_file, "w") as outstream:
 			outstream.writelines(new_file)
-
-
-		print 's';
-
-

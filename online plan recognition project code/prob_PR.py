@@ -10,7 +10,7 @@ ideal_costs = []
 ideal_actions = []
 ideal_preconditions = []
 
-
+# get the greedy cost from the soln files
 def get_greedy_cost(path, planner_name):
 	cost = -1
 	if "LAMA" in planner_name:
@@ -39,6 +39,7 @@ def custom_partition( s, sep ) :
 	if i == 0 : return ( None, s[i], s[i+1:] )
 	return ( s[:i-1], s[i], s[i+1:] )
 
+# load the hypothesis from the benchmark tar to an objects
 def load_hypotheses() :
 	hyps = []
 	instream = open( 'hyps.dat' )
@@ -51,12 +52,14 @@ def load_hypotheses() :
 	instream.close()
 	return hyps
 
+# load the observations from the benchmark tar to a list
 def load_observations():
 	instream = open('obs.dat')
 	obs = [line.strip()for line in instream]
 	instream.close()
 	return obs
 
+# writes the temporary report files
 def write_report( experiment, hyps, obs, hyp_num, options, planner_name, obs_num, domain_data, observations_plans = []) :
 	outstream = open( 'report.txt', 'w' )
 
@@ -72,35 +75,22 @@ def write_report( experiment, hyps, obs, hyp_num, options, planner_name, obs_num
 	hyps_data = []
 	total_costs = 0
 	i = 0
+	# gathering data from all hyps and does calculations
 	for hyp in hyps:
 		hyp_data = []
-		# if obs_num != -1:  # online
-		# 	current_domain = domain_data.data_saved[str(obs_num) + "," + str(i)]
 
 		if obs_num == -1:  # offline
 			current_domain = domain_data.data_saved["offline_" + str(i)]
-			# ideal_costs.append(current_domain[0])
 			sol_file_name = str(i) + "_neg-O_offline_pr-problem.soln"
 			ideal_value = get_greedy_cost(os.getcwd() + "/results/solution_files/" + sol_file_name, planner_name)
 			# if the planner failed, use the data we generated
 			if ideal_value == -1:
 				ideal_costs.append(current_domain[0])
 			ideal_costs.append(int(ideal_value))
-
 			ideal_actions.append(current_domain[1])
 
 		hyp_data.append(ideal_costs[i])
 		hyp_data.append(hyp.cost_O)
-        #
-		# hyp_temp_list = current_domain[1]  # actions from start to hyp
-		# obs_temp_list = domain_data.obs_fulfilled_actions  # actions from start to obs
-		# if obs_num != -1:  # in case of online
-		# 	obs_temp_list = domain_data.data_saved[str(obs_num) + "_obs"][1]
-		# 	# intersection of the hyp_path set and obs_path set reveals the common actions
-		# 	common_actions = [x for x in hyp_temp_list if x in obs_temp_list]
-		# 	extra_to_obs_cost = obs_temp_list.__len__() - common_actions.__len__()
-		# else:
-		# 	extra_to_obs_cost = 0
 		i += 1
 
 		# number of seen observations
@@ -109,15 +99,14 @@ def write_report( experiment, hyps, obs, hyp_num, options, planner_name, obs_num
 			obs_plan = observations_plans[obs_num].__len__()
 		hyp_data.append(obs_plan)
 
+		# calculate the VK rank
 		hyp.VK_rank = (float(hyp_data[0])/float(hyp_data[1]+obs_plan))
 		total_costs += hyp.VK_rank
-
+		# save the hyp data as a tuple
 		hyps_data.append(hyp_data)
 
-
-
-
 	i = 0
+	# printing loop
 	for hyp in hyps :
 		data = hyps_data[i]
 		greedy_cost = data[0]
@@ -128,11 +117,6 @@ def write_report( experiment, hyps, obs, hyp_num, options, planner_name, obs_num
 		not_O_probability = 1 - hyp.VK_rank/total_costs
 		hyp.Probability_O = O_probability
 		hyp.Probability_Not_O = not_O_probability
-
-		# print "\nIdeal:	" + str(data[0])
-		# # print "Hyp_cost:	" + str(hyp_cost)
-		# print "Hyp_cost:	" + str(hyp.cost_O)
-		# print "Obs:	" + str(extra_to_obs_cost) + "\n"
 
 		print >> outstream, "Hyp_Atoms_(Goal)=%s" % ",".join( hyp.atoms )
 		if hyp.test_failed :
@@ -159,13 +143,6 @@ def write_report( experiment, hyps, obs, hyp_num, options, planner_name, obs_num
 		else:  # in case of failure of both naive and neg-O preventing division in 0
 			print >> outstream, "Hyp_VK_rank=%f" % (float(greedy_cost) / float(-1))
 		print >> outstream, "Hyp_Cost_Not_O=%f"%hyp.cost_Not_O
-		# print "*/**/*/*/*/*/*/*/*/*"
-		# for a in hyps[i-1].plan:
-		# 	print a
-		# print "*********************************"
-		# for a in current_domain[3]:
-		# 	print a.name
-		# print "*/**/*/*/*/*/*/*/*/*"
 		print >> outstream, "Hyp_Prob_O=%f"%O_probability
 		print >> outstream, "Hyp_Prob_Not_O=%f"%not_O_probability
 		print >> outstream, "Hyp_Plan_Time_O=%f"%hyp.Plan_Time_O
@@ -176,125 +153,16 @@ def write_report( experiment, hyps, obs, hyp_num, options, planner_name, obs_num
 
 	outstream.close()
 
-
-# def main():
-# 	print sys.argv
-# 	options = Program_Options( sys.argv[1:] )
-#
-# 	command = "cp obs.dat obs.rsc"
-# 	os.system(command)
-#
-# 	if options.greedy :
-# 		planners.LAMA.greedy = True
-# 	#make sure that results dir exists
-# 	if not os.path.exists("results"):
-# 		os.makedirs("results", mode=0777)
-#
-# 	planner_name=""
-# 	# writing to file the planner we use, for later use
-# 	path = os.getcwd()
-# 	outstream = open(path + "/results/used_planner.txt", 'w')
-# 	if options.greedy:
-# 		outstream.write("Greedy_LAMA")
-# 		planner_name="Greedy_LAMA"
-# 	elif options.optimal:
-# 		outstream.write("H2")
-# 		planner_name ="H2"
-# 	elif options.use_FF:
-# 		outstream.write("Metric_FF")
-# 		planner_name ="Metric_FF"
-# 	elif options.use_hspr:
-# 		outstream.write("Hsp_r")
-# 		planner_name ="Hsp_r"
-# 	else:
-# 		outstream.write("LAMA")
-# 		planner_name ="LAMA"
-# 	outstream.close()
-#
-# 	hyps = load_hypotheses()
-# 	hyp_time_bounds = [ options.max_time / len(hyps) for h in hyps ]
-#
-# 	hyps[0].make_pr_domain_file()
-# 	domain_name = options.exp_file.split("_")[0]
-# 	domain = problems_info.Domain_info(domain_name, hyps)
-# 	for hyp in hyps:
-# 		hyp.domain=domain
-#
-# 	remove_command = 'rm -rf *9999_problem.pddl*'
-# 	os.system(remove_command)
-#
-# 	# run the code according to the selected mode
-# 	# online mode, works by the definitions of Vered&Kaminka (to be published) (algorithm 2)
-# 	if options.online:
-# 		obs = load_observations()
-# 		domain.generate_pddl_for_obs_plan(obs)
-# 		remainder = hyp_time_bounds[0]
-# 		# iterating the observations
-# 		for j in range(0, len(obs)):
-# 			# domain.get_obs_predicates(j)
-# 			# domain.run_planner_on_obs(j)
-# 			# domain.save_obs_data(j)
-# 			global obs_ind
-# 			# for each observation, iterate all hyps
-# 			for i in range(0, len(hyps)):
-# 				domain.run_hyp(hyps[i],j)
-# 				s=domain.actions
-# 				hyps[i].test_online(i, j, hyp_time_bounds[i], options.max_memory, s, options.optimal)
-# 				if hyps[i].cost_O == 1e7 and hyps[i].cost_Not_O == 1e7:
-# 					hyps[i].test_failed = True
-# 				remainder = remainder - hyps[i].total_time
-# 				if remainder > 0:
-# 					extra = remainder / (len(hyps) - i)
-# 					for k in range(i + 1, len(hyps)):
-# 						hyp_time_bounds[k] += extra
-# 				domain.save_data(j, i)
-# 				domain.restart()
-# 			domain.restart_obs()
-#
-# 			# write temporary report file for the observation
-# 			write_report(options.exp_file, hyps, obs, i, options, planner_name, j, domain)
-# 			# pack logs, csvs and report.txt
-# 			cmd = "tar jcvf results_" + str(j) + ".tar.bz2 *.pddl *.log report.txt obs.dat hyps.dat prob-*-PR pr-problem.soln"
-# 			os.system(cmd)
-# 			# remove irrelevant files
-# 			cmd = 'rm -rf prob-*-PR pr-problem.soln'
-# 			os.system(cmd)
-#
-# 	# offline mode, the original code of Geffner&Rammirez 2010
-# 	else:
-# 		for i in range(0, len(hyps)):
-# 			hyps[i].test_offline(i, hyp_time_bounds[i], options.max_memory, options.optimal)
-# 			domain.run_hyp(hyps[i])
-#
-# 			if hyps[i].cost_O == 1e7 and hyps[i].cost_Not_O == 1e7:
-# 				hyps[i].test_failed = True
-# 			remainder = hyp_time_bounds[i] - hyps[i].total_time
-# 			if remainder > 0:
-# 				extra = remainder / (len(hyps) - i)
-# 				for j in range(i + 1, len(hyps)):
-# 					hyp_time_bounds[j] += extra
-# 			domain.save_data(-1 , i)
-# 			domain.restart()
-#
-# 		write_report(options.exp_file, hyps, 0, len(hyps), options, planner_name, -1, domain)
-# 		# pack logs, csvs and report.txt
-# 		cmd = 'tar jcvf results.tar.bz2 *.pddl *.log report.txt obs.dat hyps.dat prob-*-PR'
-# 		os.system( cmd )
-# 		# remove irrelevant files
-# 		cmd = 'rm -rf *.log report.txt *.res *.csv *.res.* *.pddl *.dat prob-*-PR'
-# 		os.system( cmd )
-
-
+#todo recompute heuristicc function according to the paper to be published
 def recompute(plan_of_highest_ranked_goal, obs):
 	pass
 
-
+#todo prune heuristic function according to the paper to be published
 def prune(plan, obs, hyp):
 	pass
 
-
+# run the program according to the options given
 def run(run_options):
-	# print sys.argv
 	options = Program_Options( run_options[1:] )
 
 	command = "cp obs.dat obs.rsc"
@@ -327,16 +195,19 @@ def run(run_options):
 		planner_name ="LAMA"
 	outstream.close()
 
+	# loading hyps
 	hyps = load_hypotheses()
 	hyp_time_bounds = [ options.max_time / len(hyps) for h in hyps ]
 
 	hyps[0].make_pr_domain_file()
 	domain_name = options.exp_file.split("_")[0]
+	# create the domain object containing dictionaries of action and predicated of the domain
 	domain = problems_info.Domain_info(domain_name, hyps)
 
 	for hyp in hyps:
 		hyp.domain=domain
 
+	# removing temp files
 	remove_command = 'rm -rf *9999_problem.pddl*'
 	os.system(remove_command)
 
@@ -402,14 +273,9 @@ def run(run_options):
 			remainder = hyp_time_bounds[0]
 			# iterating the observations
 			for j in range(0, len(obs)):
-				# domain.get_obs_predicates(j)
-				# domain.save_obs_data(j)
-
-
 				global obs_ind
 				# for each observation, iterate all hyps
 				for i in range(0, len(hyps)):
-					# domain.run_hyp(hyps[i],j)
 					hyps[i].test_online(i, j, hyp_time_bounds[i], options.max_memory, options.optimal)
 					if hyps[i].cost_O == 1e7 and hyps[i].cost_Not_O == 1e7:
 						hyps[i].test_failed = True
@@ -418,10 +284,6 @@ def run(run_options):
 						extra = remainder / (len(hyps) - i)
 						for k in range(i + 1, len(hyps)):
 							hyp_time_bounds[k] += extra
-					# domain.save_data(j, i)
-					# domain.restart()
-					# domain.reset_dictionaries()
-				# domain.restart_obs()
 
 				# write temporary report file for the observation
 				write_report(options.exp_file, hyps, obs, i, options, planner_name, j, domain, observations_plans)
@@ -456,7 +318,3 @@ def run(run_options):
 		# remove irrelevant files
 		cmd = 'rm -rf *.log report.txt *.res *.csv *.res.* *.pddl *.dat prob-*-PR'
 		os.system( cmd )
-
-
-# if __name__ == '__main__' :
-# 	main()

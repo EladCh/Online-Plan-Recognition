@@ -2,7 +2,6 @@ import glob
 import os
 
 path = os.getcwd()
-# print path
 data = ""
 os.chdir(path + "/results")
 for text_file in glob.glob("*.csv"):

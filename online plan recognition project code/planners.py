@@ -1,5 +1,6 @@
 import benchmark, os
 
+# factory class of planner
 class Planner :
 	
 	def __init__( self, domain, problem, index, max_time = 14400, max_mem = 2048 ) :
@@ -10,7 +11,7 @@ class Planner :
 		self.max_mem = max_mem
 		self.log_file = '%s-%s-%s.log'%(self.noext_problem, index, os.path.split( os.path.split( self.problem )[0])[-1])
 		self.cost = 1e7
-
+# class with functionality to run metric ff planner
 class Metric_FF(Planner) :
 	def __init__( self, domain, problem, index, max_time = 14400, max_mem = 2048 ) :
 		Planner.__init__( self, domain, problem, index, max_time, max_mem )
@@ -31,6 +32,7 @@ class Metric_FF(Planner) :
 					self.cost = float( number )
 			instream.close()	
 
+# class with functionality to run hsp planner
 class HSP (Planner):
 
 	def __init__( self, domain, problem, index, max_time = 14400, max_mem = 2048 ) :
@@ -76,7 +78,7 @@ class HSP (Planner):
 			instream.close()
 		return plan
 		
-
+# class with functionality to run lama planner
 class LAMA (Planner):
 
 	greedy = False
